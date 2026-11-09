@@ -1,0 +1,30 @@
+# Maven
+target/
+
+# Vaadin generated frontend files (recreated on every build)
+src/main/frontend/generated/
+node_modules/
+package.json
+package-lock.json
+pnpm-lock.yaml
+.pnpmfile.cjs
+vite.config.ts
+vite.generated.ts
+tsconfig.json
+types.d.ts
+
+# IDEs
+.classpath
+.project
+.settings/
+.factorypath
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
