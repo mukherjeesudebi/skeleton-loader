@@ -102,7 +102,7 @@ html {
 ## Run the demo locally
 
 ```
-mvn spring-boot:test-run
+mvn
 ```
 
 Then open http://localhost:8080. The demo app is under `src/test/java` and is not part of the add-on jar.

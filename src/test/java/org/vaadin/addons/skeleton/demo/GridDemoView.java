@@ -6,9 +6,13 @@ import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
-import org.springframework.jdbc.core.simple.JdbcClient;
 import org.vaadin.addons.skeleton.Skeleton;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
 @Route("grid")
@@ -21,17 +25,16 @@ public class GridDemoView extends VerticalLayout {
     private static final String QUERY = """
             SELECT name, email, city,
                    COUNT(*) OVER (PARTITION BY name, city) AS namesakes,
-                   RANK() OVER (PARTITION BY city ORDER BY email) AS city_rank            FROM person
+                   RANK() OVER (PARTITION BY city ORDER BY email) AS city_rank
+            FROM person
             ORDER BY city, name, email
             """;
-    
-    private final JdbcClient jdbc;
+
     private final Grid<Person> grid = new Grid<>(Person.class);
     private final Span status = new Span();
     private final VerticalLayout panel = new VerticalLayout(new H3("People"), grid);
 
-    public GridDemoView(JdbcClient jdbc) {
-        this.jdbc = jdbc;
+    public GridDemoView() {
         grid.setColumns("name", "email", "city", "namesakes", "cityRank");
         grid.setHeight("400px");
         panel.setWidth("800px");
@@ -43,11 +46,26 @@ public class GridDemoView extends VerticalLayout {
     private void load() {
         long start = System.currentTimeMillis();
         Skeleton.load(panel,
-                () -> jdbc.sql(QUERY).query(Person.class).list(),
+                GridDemoView::queryPeople,
                 people -> {
                     grid.setItems(people);
                     status.setText("Loaded %,d rows in %,d ms".formatted(
                             people.size(), System.currentTimeMillis() - start));
                 });
+    }
+
+    private static List<Person> queryPeople() {
+        try (Connection c = DemoDatabase.connect();
+                Statement s = c.createStatement();
+                ResultSet rs = s.executeQuery(QUERY)) {
+            List<Person> people = new ArrayList<>();
+            while (rs.next()) {
+                people.add(new Person(rs.getString("name"), rs.getString("email"),
+                        rs.getString("city"), rs.getLong("namesakes"), rs.getLong("city_rank")));
+            }
+            return people;
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
